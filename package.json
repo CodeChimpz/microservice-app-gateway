@@ -1,0 +1,32 @@
+{
+  "name": "gateway-service",
+  "description": "API gateway that proxies requests from a socket connection to http endpoints on microservices, with endpoint registration from the services in runtime.",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon src/server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CodeChimpz/microservice-app-gateway.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CodeChimpz/microservice-app-gateway/issues"
+  },
+  "homepage": "https://github.com/CodeChimpz/microservice-app-gateway#readme",
+  "dependencies": {
+    "@types/express": "^4.17.16",
+    "@types/node": "^18.11.18",
+    "axios": "^1.2.3",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "logger": "file:../../modules/logger",
+    "service-to-server": "file:../../modules/service-to-server",
+    "socket.io": "^4.5.4"
+  }
+}
