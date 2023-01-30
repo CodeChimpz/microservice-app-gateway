@@ -1,29 +1,49 @@
-import express, {json, Request, Response} from 'express'
-import {EndpointObject} from 'service-to-server'
+import express, {json, raw, Request, Response} from 'express'
+import {ApiObjectT} from 'service-to-server'
 import {config} from "dotenv";
+import {logger} from "./logger-init.js";
+import {redis} from "./redis.js";
+import cors from 'cors'
+import ORIGINS from "../config/origins.json" assert {type: "json"}
 
-
+const session = redis
 config()
-//todo : 1) make into map 2) put into express App
-const API: { [key: string]: any } = {}
+
 export const app = express()
 //middleware
 app.use(json())
+//cors
+app.use(cors({
+    origin: function (requestOrigin, callback) {
+        if (!requestOrigin || Object.values(ORIGINS).indexOf(String(requestOrigin)) !== -1) {
+            callback(null, true)
+        } else {
+            callback(new Error('Origin not allowed by CORS'))
+        }
+    }
+}))
 //routing
-app.post('/endpoint-registration', (req: Request, res: Response) => {
-    const {service, auth, endpoints} = req.body
-    //api key check mb ??
-    //endpoint registration
-    Object.entries(endpoints).forEach(entry => {
-        const [method, endpoints_] = entry
-        Object.entries(endpoints_ as EndpointObject).forEach(entry_ => {
-            const [route, endpoint] = entry_
-            API[endpoint] = {route, method}
-        })
-    })
-    res.sendStatus(200)
+app.post('/endpoint-registration', async (req: Request, res: Response) => {
+    try {
+        const {service, auth, endpoints} = req.body
+        //api key check mb ??
+        //endpoint registration
+        const origin = ORIGINS[service as keyof typeof ORIGINS]
+        //
+        logger.http.info('A service initiated syncing endpoints', {service, host: origin})
+        //
+        await Promise.all(Object.entries(endpoints).map(entry => {
+            const [route, endpoint] = entry
+            const key = service + '.' + endpoint
+            const val = origin + route
+            //
+            logger.http.info(`Registered endpoint ${key} - ${val} `,)
+            return session.set(key, val)
+        }))
+        res.status(200).json({message: "Registered endpoints successfully"})
+    } catch (e: any) {
+        logger.app.error(e)
+        res.status(500).json({message: "Something failed while registering endpoints"})
+    }
 })
-app.get('/API', (req: Request, res: Response) => {
-    console.log(API)
-    res.json(API)
-})
+
