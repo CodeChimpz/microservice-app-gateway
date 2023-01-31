@@ -1,10 +1,10 @@
 import express, {json, raw, Request, Response} from 'express'
 import {ApiObjectT} from 'service-to-server'
 import {config} from "dotenv";
-import {logger} from "./logger-init.js";
-import {redis} from "./redis.js";
+import {logger} from "./util/logger-init.js";
+import {redis} from "./util/redis.js";
 import cors from 'cors'
-import ORIGINS from "../config/origins.json" assert {type: "json"}
+import ORIGINS from "./config/origins.json" assert {type: "json"}
 
 const session = redis
 config()
@@ -13,15 +13,18 @@ export const app = express()
 //middleware
 app.use(json())
 //cors
-app.use(cors({
-    origin: function (requestOrigin, callback) {
-        if (!requestOrigin || Object.values(ORIGINS).indexOf(String(requestOrigin)) !== -1) {
-            callback(null, true)
-        } else {
-            callback(new Error('Origin not allowed by CORS'))
+if (process.env.ENABLE_CORS) {
+    app.use(cors({
+        origin: function (requestOrigin, callback) {
+            if (Object.values(ORIGINS).indexOf(String(requestOrigin)) !== -1) {
+                callback(null, true)
+            } else {
+                callback(new Error('Origin not allowed by CORS'))
+            }
         }
-    }
-}))
+    }))
+}
+
 //routing
 app.post('/endpoint-registration', async (req: Request, res: Response) => {
     try {

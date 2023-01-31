@@ -2,11 +2,12 @@
   "name": "gateway-service",
   "description": "API gateway that proxies requests from a socket connection to http endpoints on microservices, with endpoint registration from the services in runtime.",
   "version": "1.0.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
   "type": "module",
   "scripts": {
-    "start": "nodemon src/server.ts",
+    "dev": "nodemon src/server.ts",
+    "start": "rm -r dist && tsc && node ./dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -28,9 +29,9 @@
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "logger": "file:../../modules/logger",
+    "mein-winston-logger": "^1.0.0",
     "redis": "^4.6.3",
-    "service-to-server": "file:../../modules/service-to-server",
+    "service-to-server": "^1.0.1",
     "socket.io": "^4.5.4"
   }
 }

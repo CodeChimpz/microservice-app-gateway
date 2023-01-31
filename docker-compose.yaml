@@ -1,0 +1,24 @@
+version: '3.3'
+services:
+  server:
+    build:
+      dockerfile: Dockerfile
+    volumes:
+      - /usr/app/node_modules
+      - /logs/:/usr/app/logs
+    environment:
+      - PORT=8080
+      - SOCKET_PORT=8081
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+  redis:
+    restart: always
+    build:
+      dockerfile: redis.Dockerfile
+    ports:
+      - "13333:13333"
+    volumes:
+      - /redis/:/data
+
+

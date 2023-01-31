@@ -2,7 +2,6 @@ import {app} from "./app.js";
 import {config} from "dotenv";
 import {io} from "./socket.js";
 
-
 config()
 const {PORT, SOCKET_PORT} = process.env
 
