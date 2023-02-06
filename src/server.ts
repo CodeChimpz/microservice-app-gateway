@@ -7,6 +7,7 @@ const {PORT, SOCKET_PORT} = process.env
 
 app.listen(PORT, () => {
     console.log('Listening on ' + PORT)
+    // console.log('asd')
     io.listen(Number(SOCKET_PORT), {})
     console.log('Socket listening on ' + SOCKET_PORT)
 })

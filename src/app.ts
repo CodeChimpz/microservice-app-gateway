@@ -1,5 +1,4 @@
 import express, {json, raw, Request, Response} from 'express'
-import {ApiObjectT} from 'service-to-server'
 import {config} from "dotenv";
 import {logger} from "./util/logger-init.js";
 import {redis} from "./util/redis.js";
@@ -28,6 +27,7 @@ if (process.env.ENABLE_CORS) {
 //routing
 app.post('/endpoint-registration', async (req: Request, res: Response) => {
     try {
+        // console.log('aa')
         const {service, auth, endpoints} = req.body
         //api key check mb ??
         //endpoint registration

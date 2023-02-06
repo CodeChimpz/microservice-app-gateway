@@ -1,0 +1,16 @@
+config:
+  target: http://localhost:8081
+  transports: [ "websocket" ]
+  phases:
+    - duration: 5
+      arrivalRate: 1
+      name: Basic
+  engines:
+    socketio-v3: { }
+scenarios:
+  - engine: socketio-v3
+    flow:
+      #      - think: 60
+      - emit:
+          channel: 'access-endpoint'
+          data: 'user.user.get'

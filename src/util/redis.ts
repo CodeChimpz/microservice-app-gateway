@@ -1,6 +1,7 @@
 import {config} from "dotenv";
-import {createClient} from "redis";
+import {Redis} from "ioredis";
 
 config()
-export const redis = createClient({url: process.env.REDIS_URL})
-await redis.connect()
+
+export const redis = new Redis(String(process.env.REDIS_URL), {enableOfflineQueue: false})
+

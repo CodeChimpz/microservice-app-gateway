@@ -1,11 +1,13 @@
 version: '3.3'
 services:
   server:
+    command: ["npm","run","dev"]
     build:
       dockerfile: Dockerfile
     volumes:
       - /usr/app/node_modules
-      - /logs/:/usr/app/logs
+      - ./logs/:/usr/app/logs
+      - ./src:/usr/app/src
     environment:
       - PORT=8080
       - SOCKET_PORT=8081

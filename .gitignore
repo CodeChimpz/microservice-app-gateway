@@ -3,3 +3,5 @@
 /.idea
 .env
 /config
+/test/scripts
+#/test/artillery.io
