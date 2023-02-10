@@ -1,7 +1,9 @@
 import {RateLimiterRedis} from "rate-limiter-flexible";
+import {Request, Response} from "express";
 import {Socket} from "socket.io";
 import {logger} from "./logger-init.js";
-import {redis} from './redis.js'
+import {SessionCache as redis} from './redis.js'
+import {DefaultEventsMap} from "socket.io/dist/typed-events";
 
 export const ShortRateLimiter = new RateLimiterRedis({
     storeClient: redis,
@@ -15,14 +17,13 @@ export const ShortRateLimiter = new RateLimiterRedis({
 
 export async function shortRateLimiterMiddleware(socket: Socket, next: any) {
     try {
-        // console.log(await ShortRateLimiter.get(socket.handshake.address))
         await ShortRateLimiter.consume(socket.handshake.address, 1)
         next()
     } catch (e: any) {
         logger.app.error('rate limit exceeded ', {address: socket.handshake.address, details: e})
-        // socket.emit('connect_error', 'rate exceeded')
         socket.disconnect()
     }
 }
+
 
 

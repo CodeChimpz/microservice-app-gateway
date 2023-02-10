@@ -1,7 +1,7 @@
 import express, {json, raw, Request, Response} from 'express'
 import {config} from "dotenv";
 import {logger} from "./util/logger-init.js";
-import {redis} from "./util/redis.js";
+import {SessionCache as redis} from "./util/redis.js";
 import cors from 'cors'
 import ORIGINS from "./config/origins.json" assert {type: "json"}
 
@@ -31,13 +31,19 @@ app.post('/endpoint-registration', async (req: Request, res: Response) => {
         const {service, auth, endpoints} = req.body
         //api key check mb ??
         //endpoint registration
-        const origin = ORIGINS[service as keyof typeof ORIGINS]
+        let origin = ORIGINS[service as keyof typeof ORIGINS]
         //
         logger.http.info('A service initiated syncing endpoints', {service, host: origin})
         //
         await Promise.all(Object.entries(endpoints).map(entry => {
             const [route, endpoint] = entry
             const key = service + '.' + endpoint
+            //test environment when total service orchestration is not in place and services run outside docker network
+            console.log(process.env.ONLY_THIS_DOCKERIZED)
+            if (process.env.ONLY_THIS_DOCKERIZED) {
+                origin = origin.replace('localhost', 'host.docker.internal')
+            }
+            //
             const val = origin + route
             //
             logger.http.info(`Registered endpoint ${key} - ${val} `,)

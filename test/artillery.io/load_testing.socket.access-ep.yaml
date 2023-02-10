@@ -1,16 +1,18 @@
 config:
   target: http://localhost:8081
-  transports: [ "websocket" ]
+  #  transports: [ "websocket" ]
   phases:
-    - duration: 5
-      arrivalRate: 1
+    - duration: 60
+      arrivalRate: 10
       name: Basic
   engines:
     socketio-v3: { }
 scenarios:
   - engine: socketio-v3
     flow:
-      #      - think: 60
       - emit:
           channel: 'access-endpoint'
           data: 'user.user.get'
+#          response:
+#            channel: 'response'
+#            data: '{"data":[{"id":1,"name":"Johnny","email":"A@bet","password":"1234543asdf","account":null,"phone":null}],"message":"Retrieved successfully"}'

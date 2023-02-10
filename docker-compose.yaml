@@ -14,13 +14,21 @@ services:
     ports:
       - "8080:8080"
       - "8081:8081"
-  redis:
+  redis-service-cache:
     restart: always
     build:
       dockerfile: redis.Dockerfile
     ports:
       - "13333:13333"
     volumes:
-      - /redis/:/data
+      - /redis/service-cache:/data
+  redis-app-cache:
+      restart: always
+      build:
+        dockerfile: redis.Dockerfile
+      ports:
+        - "13334:13333"
+      volumes:
+        - /redis/app-cache:/data
 
 

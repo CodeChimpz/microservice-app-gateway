@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "nodemon -L src/server.ts",
     "start": "rm -r dist && tsc && node --trace-warnings ./dist/server.js",
-    "test": "artillery run test/artillery.io/load_testing.socket.access-ep.yaml\n && exit 1"
+    "test": "artillery run test/artillery.io/load_testing.socket.access-ep.yaml -o ./test/artillery.io/output.json"
   },
   "repository": {
     "type": "git",
@@ -31,10 +31,10 @@
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "ioredis": "^5.3.0",
-    "mein-winston-logger": "^1.0.2",
+    "mein-winston-logger": "^1.0.5",
     "rate-limiter-flexible": "^2.4.1",
     "redis": "^4.6.4",
     "service-to-server": "^1.0.1",
-    "socket.io": "^4.5.4"
+    "socket.io": "^4.6.0"
   }
 }
