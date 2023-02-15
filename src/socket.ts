@@ -1,32 +1,34 @@
 import {Server, Socket} from "socket.io";
-import {app} from "./app.js";
 import * as http from "http";
 import axios from "axios";
-import {logger} from "./util/logger-init.js";
-import {SessionCache as redis} from "./util/redis.js";
-import {shortRateLimiterMiddleware} from "./util/rate-limiter.js";
+import {logger} from "./init/logger.js";
+// import {SessionCache as redis} from "./init/redis.js";
+import {shortRateLimiterMiddleware} from "./socket.mw/rate-limiter.js";
 import {DefaultEventsMap} from "socket.io/dist/typed-events";
-import {redisCache} from "./util/Cache.js";
+import {redisCache} from "./Cache.js";
 import {response} from "express";
+import express from 'express'
+import {registry} from "./init/service-registry.js";
+//
 
-const session = redis
-const server = http.createServer(app)
-export const io = new Server(server, {
-    //didn't work with artillery + no reason to ditch polling
-    // transports: ['websocket']
-})
+
+
+// const session = redis
+const server = http.createServer(express())
+//Server init
+export const io = new Server(server, {})
 //mw
 io.use(shortRateLimiterMiddleware)
 //nig*a the type conversion is retarded
 io.engine.use((req, res, next) => shortRateLimiterMiddleware(<Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>><unknown>req.socket, next))
+//Server and socket events handling
 io.on('connection', (socket) => {
-
     logger.http.info('New client connected ' + socket.handshake.address)
     //redirect socket event to microservice endpoint
     socket.on('access-endpoint', async (token, data, callback) => {
         try {
             //get the address of the service endpoint
-            const url = await session.get(token)
+            const url = await registry.route(token)
             if (!url) {
                 return socket.emit('response', {
                     error: 'Cannot get ' + token + ', no such endpoint found',
@@ -78,7 +80,5 @@ io.on('connection', (socket) => {
             socket.emit('response', {error: 'Server error', status: 500})
             //callback(error)
         }
-
     })
-
 })

@@ -1,8 +1,8 @@
 import {RateLimiterRedis} from "rate-limiter-flexible";
 import {Request, Response} from "express";
 import {Socket} from "socket.io";
-import {logger} from "./logger-init.js";
-import {SessionCache as redis} from './redis.js'
+import {logger} from "../init/logger.js";
+import {SessionCache as redis} from '../init/redis.js'
 import {DefaultEventsMap} from "socket.io/dist/typed-events";
 
 export const ShortRateLimiter = new RateLimiterRedis({

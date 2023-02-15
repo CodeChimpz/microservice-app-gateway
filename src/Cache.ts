@@ -1,8 +1,8 @@
 import {Redis} from "ioredis";
 // import {RedisCache} from "redis-lru-cache";
-import {AppCache as redis} from "./redis.js";
+import {AppCache as redis} from "./init/redis.js";
 import {config} from "dotenv";
-import {logger} from "./logger-init.js";
+import {logger} from "./init/logger.js";
 
 config()
 
@@ -36,6 +36,7 @@ function parseFromRedisMemInfo(param: string, info_mem: string): number {
     if (!metric) {
         return Number(mem_stat)
     }
+    //todo: ENUM
     switch (metric[0]) {
         case 'K':
             return Number(mem_stat) * 1000
