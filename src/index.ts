@@ -8,4 +8,3 @@ const {PORT, SOCKET_PORT} = process.env
 
 io.listen(Number(SOCKET_PORT), {})
 logger.app.info('Socket listening on ' + SOCKET_PORT)
-

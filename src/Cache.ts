@@ -1,6 +1,5 @@
 import {Redis} from "ioredis";
-// import {RedisCache} from "redis-lru-cache";
-import {AppCache as redis} from "./init/redis.js";
+import {AppCache } from "./init/redis.js";
 import {config} from "dotenv";
 import {logger} from "./init/logger.js";
 
@@ -55,7 +54,8 @@ function getPercentsMemStat(stat1: number, stat2: number, critical: number) {
 }
 
 export class RedisCacheManager {
-    redis: Redis
+    //todo: there's a weird bug here i have no idea but it throws `Property 'get' does not exist on type 'Redis'` on compilation
+    redis: any
     options: Options
 
     // lruclient: RedisCache
@@ -66,22 +66,26 @@ export class RedisCacheManager {
     }
 
     async init() {
-        const info_mem = await this.redis.info('memory')
-        //get stats from redis info
-        const used_mem_val = parseFromRedisMemInfo('used_memory', info_mem)
-        const used_mem_start = parseFromRedisMemInfo('used_memory_startup', info_mem)
-        //if used_memory is bigger than used_memory_startup by a sufficicent margin we won't attribute it to redis
-        //onstartup memory expenses and later flush the mf if it is bigger than the defined maxmemory
-        const occ_k = getPercentsMemStat(used_mem_start, used_mem_val, 5)
-        if(used_mem_val >= this.options.maxmemory && occ_k) {
-            await this.redis.flushall()
-            logger.app.info('Flushed Cache')
+        try {
+            const info_mem = await this.redis.info('memory')
+            //get stats from redis info
+            const used_mem_val = parseFromRedisMemInfo('used_memory', info_mem)
+            const used_mem_start = parseFromRedisMemInfo('used_memory_startup', info_mem)
+            //if used_memory is bigger than used_memory_startup by a sufficicent margin we won't attribute it to redis
+            //onstartup memory expenses and later flush the mf if it is bigger than the defined maxmemory
+            const occ_k = getPercentsMemStat(used_mem_start, used_mem_val, 5)
+            if (used_mem_val >= this.options.maxmemory && occ_k) {
+                await this.redis.flushall()
+                logger.app.info('Flushed Cache')
+            }
+            if (used_mem_val >= this.options.maxmemory && !occ_k) {
+                throw new Error('Supplied param "maxmemory" for cache config is smaller than on startup memory usage, please reconsider')
+            }
+            await this.redis.config('SET', 'maxmemory', this.options.maxmemory)
+            await this.redis.config('SET', 'maxmemory-policy', this.options.maxmemory_pol)
+        } catch (e) {
+            logger.app.error(e as any)
         }
-        if(used_mem_val >= this.options.maxmemory && !occ_k){
-            throw new Error('Supplied param "maxmemory" for cache config is smaller than on startup memory usage, please reconsider')
-        }
-        await this.redis.config('SET', 'maxmemory', this.options.maxmemory)
-        await this.redis.config('SET', 'maxmemory-policy', this.options.maxmemory_pol)
     }
 
     //sets data for  key "token + id value of object in payload"
@@ -107,5 +111,5 @@ const OPTS = {
     maxmemory_pol: 'allkeys-lru',
     ttl: 24 * 60 * 60 * 60
 }
-export const redisCache = new RedisCacheManager('', {}, OPTS, redis)
-await redisCache.init()
+export const redisCache = new RedisCacheManager('', {}, OPTS, AppCache)
+// await redisCache.init()

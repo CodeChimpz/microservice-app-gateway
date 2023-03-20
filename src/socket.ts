@@ -12,14 +12,14 @@ import {registry} from "./init/service-registry.js";
 //
 
 
-
 // const session = redis
 const server = http.createServer(express())
 //Server init
 export const io = new Server(server, {})
-//mw
+//MIDDLEWARE
+//rate limiter for connections
 io.use(shortRateLimiterMiddleware)
-//nig*a the type conversion is retarded
+//rate limiter for in-session requests
 io.engine.use((req, res, next) => shortRateLimiterMiddleware(<Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>><unknown>req.socket, next))
 //Server and socket events handling
 io.on('connection', (socket) => {
@@ -75,8 +75,8 @@ io.on('connection', (socket) => {
             if (cache_res && to_cache) {
                 await redisCache.put(route_key, to_cache)
             }
-        } catch (e: any) {
-            logger.app.error(e)
+        } catch (e) {
+            logger.app.error(e as any)
             socket.emit('response', {error: 'Server error', status: 500})
             //callback(error)
         }

@@ -32,7 +32,7 @@ services:
   redis-app-cache:
     restart: always
     build:
-      dockerfile: redis.Dockerfile
+      dockerfile: Dockerfile.redis
     ports:
       - "13334:13333"
     volumes:
@@ -40,7 +40,7 @@ services:
   redis-service-cache:
     restart: always
     build:
-      dockerfile: redis.Dockerfile
+      dockerfile: Dockerfile.redis
     ports:
       - "13333:13333"
     volumes:
