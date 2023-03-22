@@ -2,13 +2,13 @@ import {Server, Socket} from "socket.io";
 import * as http from "http";
 import axios from "axios";
 import {logger} from "./init/logger.js";
-// import {SessionCache as redis} from "./init/redis.js";
-import {shortRateLimiterMiddleware} from "./socket.mw/rate-limiter.js";
-import {DefaultEventsMap} from "socket.io/dist/typed-events";
+import {limiterFactory} from "./middleware/rate-limiter.js";
 import {redisCache} from "./Cache.js";
 import {response} from "express";
 import express from 'express'
 import {registry} from "./init/service-registry.js";
+import {ConnectionRateLimiter, SessionRateLimiter} from "./init/redis.js";
+import {ipRangeBlock} from "./middleware/ip-range.js";
 //
 
 
@@ -17,10 +17,12 @@ const server = http.createServer(express())
 //Server init
 export const io = new Server(server, {})
 //MIDDLEWARE
+
 //rate limiter for connections
-io.use(shortRateLimiterMiddleware)
+io.use(limiterFactory(ConnectionRateLimiter))
+io.use(ipRangeBlock)
 //rate limiter for in-session requests
-io.engine.use((req, res, next) => shortRateLimiterMiddleware(<Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>><unknown>req.socket, next))
+io.engine.use((req, res, next) => limiterFactory(SessionRateLimiter))
 //Server and socket events handling
 io.on('connection', (socket) => {
     logger.http.info('New client connected ' + socket.handshake.address)
@@ -29,13 +31,6 @@ io.on('connection', (socket) => {
         try {
             //get the address of the service endpoint
             const url = await registry.route(token)
-            if (!url) {
-                return socket.emit('response', {
-                    error: 'Cannot get ' + token + ', no such endpoint found',
-                    status: 404
-                })
-                //callback(error)
-            }
             //handle request redirection
             const redirect_req = {data, require_cache: false}
             let cache_res: boolean = false
@@ -52,7 +47,7 @@ io.on('connection', (socket) => {
                     break;
                 case 'get':
                     //get from cache
-                    const cached = await redisCache.get(route_key, data)
+                    const cached = await redisCache.putResult(route_key, data)
                     if (!cached) {
                         //
                         logger.app.debug('Cache miss for : ' + token, data)
@@ -68,16 +63,20 @@ io.on('connection', (socket) => {
             //WTF why doesn't the other catch{} get the AxiosError this is retarded
             const response = await axios.post(url, redirect_req, {})
             //testing purposes
-            socket.emit('response', response.data.message, response.data.data)
+            socket.emit('response', response.data)
             // callback(response)
             const to_cache = response.data.to_cache
             //Write to cache if specified earlier
             if (cache_res && to_cache) {
-                await redisCache.put(route_key, to_cache)
+                await redisCache.putResult(route_key, to_cache)
             }
-        } catch (e) {
-            logger.app.error(e as any)
-            socket.emit('response', {error: 'Server error', status: 500})
+        } catch (e: any) {
+            logger.app.error(e)
+            if (e.response?.status <= 400) {
+                socket.emit('response', {error: e.response.data, status: e.response.status})
+            } else {
+                socket.emit('response', {error: 'Server error', status: 500})
+            }
             //callback(error)
         }
     })

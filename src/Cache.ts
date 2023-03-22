@@ -1,5 +1,5 @@
 import {Redis} from "ioredis";
-import {AppCache } from "./init/redis.js";
+import {AppCache} from "./init/redis.js";
 import {config} from "dotenv";
 import {logger} from "./init/logger.js";
 
@@ -88,21 +88,30 @@ export class RedisCacheManager {
         }
     }
 
-    //sets data for  key "token + id value of object in payload"
-    async put(token: string, data: IdentifiableDataI) {
-        const id = token + data._id
+    //sets data for key "token + id" with value of object with an _id in payload
+    async putResult(key: string, data: any & IdentifiableDataI, expire?: number) {
+        const id = key + data._id
         const to_set = JSON.stringify(data)
         const res = await this.redis.set(id, to_set)
         if (this.options.ttl) {
             await this.redis.expire(id, String(this.options.ttl))
         }
-        return res
+        if (expire) {
+            await this.redis.expire(id, expire)
+        }
+        return JSON.parse(res)
+    }
+
+    //gets cached dataa
+    async getResult(key: string, id_obj: any & IdentifiableDataI) {
+        const id = id_obj._id
+        return JSON.parse(await this.redis.get(key + id))
     }
 
     //
-    async get(token: string, id_obj: IdentifiableDataI) {
-        const id = id_obj._id
-        return this.redis.get(token + id)
+    async accumulate(key: string) {
+        const curr = await this.redis.get(key)
+        await this.redis.put(key, curr + 1)
     }
 }
 
