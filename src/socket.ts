@@ -9,20 +9,23 @@ import express from 'express'
 import {registry} from "./init/service-registry.js";
 import {ConnectionRateLimiter, SessionRateLimiter} from "./init/redis.js";
 import {ipRangeBlock} from "./middleware/ip-range.js";
+import {DefaultEventsMap} from "socket.io/dist/typed-events";
+import {authJWTExpress, authJWTSocket} from "./middleware/authentication.js";
 //
-
-
 // const session = redis
 const server = http.createServer(express())
 //Server init
-export const io = new Server(server, {})
+export const io = new Server(server, {transports: ['polling', 'websocket']})
 //MIDDLEWARE
-
+io.use(ipRangeBlock)
 //rate limiter for connections
 io.use(limiterFactory(ConnectionRateLimiter))
-io.use(ipRangeBlock)
+//auth on socket handshake
+io.use(authJWTSocket)
+//LONG POLLING EXPRESS MIDDLEWARE
 //rate limiter for in-session requests
-io.engine.use((req, res, next) => limiterFactory(SessionRateLimiter))
+io.engine.use((req, res, next) => limiterFactory(SessionRateLimiter)(req.socket as unknown as Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>, next))
+io.engine.use(authJWTExpress)
 //Server and socket events handling
 io.on('connection', (socket) => {
     logger.http.info('New client connected ' + socket.handshake.address)
@@ -32,18 +35,15 @@ io.on('connection', (socket) => {
             //get the address of the service endpoint
             const url = await registry.route(token)
             //handle request redirection
-            const redirect_req = {data, require_cache: false}
-            let cache_res: boolean = false
-            //handle caching logic
             const [action] = token.split('.').slice(-1)
             const [route_key] = token.split(action)
-            //for create/update type actions ".post/.put in token" - signal to service to send back data for w-through caching
+            //handle caching logic
+            //for create/update type actions ".post/.put in token" - require service to send back data for w-through caching
+            let require_cache = false
             switch (action) {
-                case 'put':
                 case 'post':
                     logger.app.debug('Cache write initiated')
-                    redirect_req.require_cache = true
-                    cache_res = true
+                    require_cache = true
                     break;
                 case 'get':
                     //get from cache
@@ -60,14 +60,17 @@ io.on('connection', (socket) => {
                 //
             }
             //Send request to Service
-            //WTF why doesn't the other catch{} get the AxiosError this is retarded
-            const response = await axios.post(url, redirect_req, {})
+            const response = await axios.post(url, {
+                data,
+                require_cache,
+                _id: socket.auth
+            }, {})
             //testing purposes
             socket.emit('response', response.data)
             // callback(response)
             const to_cache = response.data.to_cache
             //Write to cache if specified earlier
-            if (cache_res && to_cache) {
+            if (require_cache && to_cache) {
                 await redisCache.putResult(route_key, to_cache)
             }
         } catch (e: any) {

@@ -32,7 +32,7 @@ export const Ban = new RateLimiterRedis({
     storeClient: SessionCache,
     keyPrefix: 'ban',
     points: 5,
-    duration: 86400,
+    duration: 3600,
     blockDuration: 7889238,
     inMemoryBlockOnConsumed: 5,
     inMemoryBlockDuration: 7889238,

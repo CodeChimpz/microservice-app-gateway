@@ -11,7 +11,7 @@ export function limiterFactory(limiter: RateLimiterRedis) {
         try {
             const banned_ = await Ban.get(socket.handshake.address)
             //check if banned
-            if (!banned_?.remainingPoints) {
+            if ((Number(banned_?.remainingPoints) <= 0)) {
                 logger.http.error('attempt banned ', {address: socket.handshake.address})
                 socket.disconnect()
                 next('attempt banned')
