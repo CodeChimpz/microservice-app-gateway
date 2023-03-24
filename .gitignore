@@ -5,3 +5,4 @@
 /config
 /test/scripts
 #/test/artillery.io
+Dockerfile.*

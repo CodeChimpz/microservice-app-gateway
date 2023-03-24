@@ -6,35 +6,39 @@
   "types": "dist/server.d.ts",
   "type": "module",
   "scripts": {
-    "dev": "nodemon -L src/server.ts",
-    "start": "rm -r dist && tsc && node --trace-warnings ./dist/server.js",
-    "test": "artillery run test/artillery.io/load_testing.socket.access-ep.yaml -o ./test/artillery.io/output.json"
+    "docker": "docker compose up --build",
+    "dev": "nodemon -L src/index.ts",
+    "start": "rm -r dist && tsc && node --trace-warnings ./dist/index.js",
+    "test-load": "artillery run test/artillery.io/load_testing.socket.access-ep.yaml -o ./test/artillery.io/output.json"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/CodeChimpz/microservice-app-gateway.git"
   },
-  "author": "",
+  "author": "codechimpz",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/CodeChimpz/microservice-app-gateway/issues"
   },
   "homepage": "https://github.com/CodeChimpz/microservice-app-gateway#readme",
   "dependencies": {
-    "@types/cors": "^2.8.13",
+    "@types/axios": "^0.14.0",
     "@types/express": "^4.17.17",
     "@types/ioredis": "^5.0.0",
-    "@types/node": "^18.11.19",
-    "@types/redis": "^4.0.11",
-    "axios": "^1.3.2",
-    "cors": "^2.8.5",
+    "@types/jsonwebtoken": "^9.0.1",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "ioredis": "^5.3.0",
-    "mein-winston-logger": "^1.0.5",
+    "ioredis": "^5.3.1",
+    "ip-range-check": "^0.2.0",
+    "jsonwebtoken": "^9.0.0",
+    "knex-db-connector": "^1.0.31",
+    "mein-etcd-service-registry": "^1.0.57",
+    "mein-winston-logger": "^1.0.7",
     "rate-limiter-flexible": "^2.4.1",
-    "redis": "^4.6.4",
-    "service-to-server": "^1.0.1",
-    "socket.io": "^4.6.0"
+    "socket.io": "^4.6.1"
+  },
+  "devDependencies": {
+    "artillery": "^2.0.0-30",
+    "artillery-engine-socketio-v3": "^1.1.2"
   }
 }

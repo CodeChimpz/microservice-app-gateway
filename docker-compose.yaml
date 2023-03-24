@@ -1,11 +1,11 @@
 version: '3.3'
 services:
   server:
-    command: ["npm","run","dev"]
+    command: [ "npm","run","dev" ]
     build:
       dockerfile: Dockerfile
     volumes:
-      - /usr/app/node_modules
+#      - /usr/app/node_modules
       - ./logs/:/usr/app/logs
       - ./src:/usr/app/src
     environment:
@@ -14,21 +14,36 @@ services:
     ports:
       - "8080:8080"
       - "8081:8081"
+    depends_on:
+      - redis-app-cache
+      - redis-service-cache
+      - etcd
+  etcd:
+    image: 'bitnami/etcd:latest'
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+      - LISTEN_CLIENT_URLS=http://etcd:2379
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+    volumes:
+      - /etcd:/etcd_data
+  redis-app-cache:
+    restart: always
+    build:
+      dockerfile: Dockerfile.redis
+    ports:
+      - "13334:13333"
+    volumes:
+      - /redis/app-cache:/data
   redis-service-cache:
     restart: always
     build:
-      dockerfile: redis.Dockerfile
+      dockerfile: Dockerfile.redis
     ports:
       - "13333:13333"
     volumes:
-      - /redis/service-cache:/data
-  redis-app-cache:
-      restart: always
-      build:
-        dockerfile: redis.Dockerfile
-      ports:
-        - "13334:13333"
-      volumes:
-        - /redis/app-cache:/data
+      - /redis/app-cache:/data
 
 
